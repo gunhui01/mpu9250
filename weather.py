@@ -25,3 +25,5 @@ def weather_return(api_key, station_id):
     weather_dict["elevation"] = data["observations"][0]["metric_si"]['elev']
 
     return weather_dict
+    
+    ##데이터 수정 테스트 버전
