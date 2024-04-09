@@ -1,5 +1,5 @@
 from socket import *
-from connection import *
+from ..Sensor.mpu9250 import *
 
 if __name__ == '__main__':
     port = 8080
