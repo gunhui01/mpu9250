@@ -5,8 +5,8 @@ import smbus
 import time
 import warnings
 
-from rpy_calc import *
-from weather import *
+from Sensor.rpy_calc import *
+from Sensor.weather import *
 
 ### MPU9250 레지스터 ###
 INT_PIN_CFG = 0x37
@@ -136,7 +136,7 @@ class Mpu:
         self.write_data(AK, CNTL_1, 0b1111)
         self.csv.write(str(self.read_ak_data(MAG_X, ASA_X)) + ',')
         self.csv.write(str(self.read_ak_data(MAG_Y, ASA_Y)) + ',')
-        self.csv.write(str(self.read_ak_data(MAG_Z, ASA_Z)) + ',')
+        self.csv.write(str(self.read_ak_data(MAG_Z, ASA_Z)) + '\n')
         self.write_data(AK, CNTL_1, 0b10110)
     
     def agm_data_return(self):
