@@ -8,10 +8,10 @@ if __name__ == '__main__':
     server_sock = socket(AF_INET, SOCK_STREAM)
     server_sock.bind(('', port))
     server_sock.listen(1)
-    print("%d번 포트로 접속 대기 중..." % port)
+    print("Waiting for connection on %d port..." % port)
 
     connection_sock, addr = server_sock.accept()
-    print(str(addr) + "에서 접속했습니다.")
+    print("Connect from " + str(addr))
 
     rate = 0.1
     compare_timestamp = time.strftime("%Y-%m-%d %H:%M:%S")

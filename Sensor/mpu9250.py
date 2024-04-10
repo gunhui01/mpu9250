@@ -63,7 +63,7 @@ class Mpu:
 
         if not os.path.isfile(self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv"):
             os.system("touch " + self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv")
-            os.system("echo timestamp,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z,temperature,humidity,wind_direction,wind_speed,pressure >> " + self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv")
+            os.system("echo timestamp,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z >> " + self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv")
         
         self.csv = open(self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv", 'a')
 
@@ -125,7 +125,7 @@ class Mpu:
         self.i2c.write_i2c_block_data(adr, reg, command)
 
     ### csv 파일에 데이터 씀 ###
-    def agm_data_out(self, api_key, station_id):
+    def agm_data_out(self):
         self.csv.write(time.strftime("%Y.%m.%d %H:%M:%S") + ',')
         self.csv.write(str(self.read_mpu_data(ACCEL_X)) + ',')
         self.csv.write(str(self.read_mpu_data(ACCEL_Y)) + ',')
@@ -138,13 +138,6 @@ class Mpu:
         self.csv.write(str(self.read_ak_data(MAG_Y, ASA_Y)) + ',')
         self.csv.write(str(self.read_ak_data(MAG_Z, ASA_Z)) + ',')
         self.write_data(AK, CNTL_1, 0b10110)
-
-        weather_data = weather_return(api_key, station_id)
-        self.csv.write(weather_data["temperature"] + ',')
-        self.csv.write(weather_data["humidity"] + ',')
-        self.csv.write(weather_data["wind_direction"] + ',')
-        self.csv.write(weather_data["wind_speed"] + ',')
-        self.csv.write(weather_data["pressure"] + '\n')
     
     def agm_data_return(self):
         # ACCEL_X | ACCEL_Y | ACCEL_Z |  GYRO_X |  GYRO_Y |  GYRO_Z |  MAG_X  |  MAG_Y  |  MAG_Z  #
@@ -165,6 +158,18 @@ class Mpu:
         self.write_data(AK, CNTL_1, 0b10110)
 
         return a_x, a_y, a_z, g_x, g_y, g_z, m_x, m_y, m_z
+    
+    def agm_weather_data_return(self, api_key, station_id):
+        agm_weather_data = list(self.agm_data_return())
+
+        weather_data = weather_return(api_key, station_id)
+        agm_weather_data.append(weather_data["temperature"])
+        agm_weather_data.append(weather_data["humidity"])
+        agm_weather_data.append(weather_data["wind_direction"])
+        agm_weather_data.append(weather_data["wind_speed"])
+        agm_weather_data.append(weather_data["pressure"])
+
+        return agm_weather_data
     
     def calibrationed_agm_data_return(self):
         raw_data = self.agm_data_return()

@@ -7,7 +7,7 @@ def file_check():
 
     if not os.path.isfile(dir_name + "/rpy.csv"):
         os.system("touch " + dir_name + "/rpy.csv")
-        os.system("echo timestamp,roll,pitch,yaw >> " + dir_name + "/rpy.csv")
+        os.system("echo timestamp,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z,temperature,humidity,wind_direction,wind_speed,pressure >> " + dir_name + "/rpy.csv")
 
     return open(dir_name + "/rpy.csv", 'a')
 
