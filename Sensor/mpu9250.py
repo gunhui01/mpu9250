@@ -70,6 +70,10 @@ class Mpu:
         ### 센서 조정 ###
         self.calibration_data = self.calibration()
 
+    ### str 출력 시 출력 형식 지정 ###
+    def __str__(self): 
+        return f"i2c{self.i2cbus}_{self.mpu_status}"
+
     def __del__(self):
         ### 종료시 센서 설정 ###
         print("==========<" + str(self.i2cbus) + ", " + self.mpu_status.upper() + ">==========")
