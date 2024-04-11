@@ -4,7 +4,7 @@ from socket import *
 
 def file_check(sensor_id): # 파일의 존재 유무 확인
     dir_name = os.path.dirname(os.path.realpath(__file__)) # 파일 경로 추출
-    file_path = f"{dir_name}/{sensor_id}_rpy.csv"
+    file_path = f"{dir_name}/{sensor_id}.csv"
 
     if not os.path.isfile(file_path): # 파일이 없으면
         with open(file_path, 'w') as file: # 새 파일 생성
@@ -21,12 +21,19 @@ if __name__ == '__main__':
     client_sock.connect((server_ip, 8080))
     print(f"{server_ip}에 접속했습니다.\n")
 
+    buffer = ""
+
     try:
         while True:
-            recv_data = client_sock.recv(1024).decode("utf-8")
-            sensor_id, data = recv_data.split(',', 1) # 데이터에서 센서ID 분리
-            with file_check(sensor_id) as csv: # 센서ID에 맞는 파일 생성
-                csv.write(data)
+            recv_data = client_sock.recv(1024).decode()
+
+            ### 데이터가 연속적으로 전송되는 경우를 대비하여 버퍼에 데이터 추가 ###
+            buffer += recv_data
+            while '\n' in buffer:
+                recv_data, buffer = buffer.split('\n', 1) # 데이터를 개행문자를 기준으로 분리
+                sensor_id, data = recv_data.split(',', 1) # 데이터에서 센서ID 분리
+                with file_check(sensor_id) as csv: # 센서ID에 맞는 파일 생성
+                    csv.write(data + '\n')
 
     except KeyboardInterrupt:
         print("Client stopped")
