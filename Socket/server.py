@@ -34,7 +34,7 @@ if __name__ == '__main__':
             ### 현재 시간이 00초이고, 이전 데이터를 보낸 시간과 현재 시간이 다른 경우 코드 실행 ###
             if timestamp[-2:] == '00' and timestamp != compare_timestamp: 
                 for sensor_id in sensors: # sensors 내의 객체 각각 한 번씩 실행
-                    send_data = f"{sensor_id},{timestamp},{sensor_id.agm_data_return_str()},{agm_weather_data_return_str()}\n" # 센서ID, 시간, 센서 데이터, 기상 데이터를 문자열로 저장
+                    send_data = f"{sensor_id},{timestamp},{sensor_id.agm_data_return_str()},{agm_weather_data_return_str(api_key, station_id)}\n" # 센서ID, 시간, 센서 데이터, 기상 데이터를 문자열로 저장
                     connection_sock.send(send_data.encode("utf-8")) # 생성한 데이터를 클라이언트에게 UTF-8으로 인코딩하여 전송
                     time.sleep(0.1) # 데이터가 빠르게 전송되는 것을 방지 (0.1초 지연)
             
