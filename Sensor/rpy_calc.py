@@ -42,3 +42,7 @@ def rpy_return(rate, data):
     rpy[2] = gyro_rpy[2]
 
     return rpy
+
+### rpy 리스트를 문자열로 변환하여 반환하는 함수 ###
+def rpy_return_str(rate, data):
+    return ','.join(map(str, rpy_return(rate, data))) 

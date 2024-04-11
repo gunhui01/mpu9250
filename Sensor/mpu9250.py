@@ -73,8 +73,9 @@ class Mpu:
     def __str__(self): 
         return f"i2c{self.i2cbus}_{self.mpu_status}"
 
+    ### 종료시 센서 설정 ###
     def __del__(self):
-        ### 종료시 센서 설정 ###
+        
         print("==========<" + str(self.i2cbus) + ", " + self.mpu_status.upper() + ">==========")
         self.write_data(AK, CNTL_1, 0b0)
         print("[AK8963] 센서 종료 설정 완료.")
@@ -84,6 +85,7 @@ class Mpu:
         self.csv.close()
         print("파일 닫기 완료.")
 
+    ### GYRO 센서 조정 ###
     def calibration(self):
         calibration_data = [0, 0, 0]
 
@@ -161,12 +163,19 @@ class Mpu:
         m_z = self.read_ak_data(MAG_Z, ASA_Z)
         self.write_data(AK, CNTL_1, 0b10110)
 
-        return a_x, a_y, a_z, g_x, g_y, g_z, m_x, m_y, m_z
+        # 각 변수를 리스트로 반환
+        return [a_x, a_y, a_z, g_x, g_y, g_z, m_x, m_y, m_z]
     
-    def calibrationed_agm_data_return(self):
-        raw_data = self.agm_data_return()
-        calibrationed_data = list(raw_data)
-        #calibrationed_data[6] -= 24.3 # MAG_X offset
-        #calibrationed_data[7] -= 1.4 # MAG_Y offset
-        for i in range(3, 6): calibrationed_data[i] -= self.calibration_data[i - 3]
-        return calibrationed_data
+    ### 센서 데이터를 문자열로 변환하여 반환하는 함수 ###
+    def agm_data_return_str(self):
+        return ','.join(map(str, self.agm_data_return()))
+    
+    ### GYRO 센서 보정 후 데이터 반환 ###
+    def calibrated_agm_data_return(self):
+        calibrated_data = self.agm_data_return()
+
+        for i in range(3, 6): calibrated_data[i] -= self.calibration_data[i - 3]
+        return calibrated_data
+    
+        #calibrated_data[6] -= 24.3 # MAG_X offset
+        #calibrated_data[7] -= 1.4 # MAG_Y offset
