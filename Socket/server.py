@@ -1,11 +1,10 @@
 import os
 import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # 상위 디렉토리의 파일을 import하기 위한 설정
 from socket import *
 from Sensor.mpu9250 import *
 from Sensor.weather import *
 
-# 상위 디렉토리의 파일을 import하기 위한 설정
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 api_key = "API_KEY"
 station_id = "STATION_ID"
