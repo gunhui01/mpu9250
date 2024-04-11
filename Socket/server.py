@@ -5,7 +5,7 @@ from socket import *
 from Sensor.mpu9250 import *
 from Sensor.weather import *
 
-with open("./../.../api_config") as f:
+with open("../../api_config") as f:
     api_key = f.readline()[1]
     station_id = f.readline()[2]
 
