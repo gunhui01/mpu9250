@@ -5,9 +5,10 @@ from socket import *
 from Sensor.mpu9250 import *
 from Sensor.weather import *
 
+### API 키와 기상대 ID 불러오기 ###
 with open("../../api_config") as f:
-    api_key = f.readline()
-    station_id = f.readline()
+    api_key = f.readline().strip()
+    station_id = f.readline().strip()
 
 if __name__ == '__main__':
     port = 8080
