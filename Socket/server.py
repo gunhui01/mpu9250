@@ -6,8 +6,8 @@ from Sensor.mpu9250 import *
 from Sensor.weather import *
 
 with open("../../api_config") as f:
-    api_key = f.readline()[1]
-    station_id = f.readline()[2]
+    api_key = f.readline()
+    station_id = f.readline()
 
 if __name__ == '__main__':
     port = 8080
