@@ -5,9 +5,9 @@ from socket import *
 from Sensor.mpu9250 import *
 from Sensor.weather import *
 
-
-api_key = "API_KEY"
-station_id = "STATION_ID"
+with open("./../.../api_config") as f:
+    api_key = f.readline()[1]
+    station_id = f.readline()[2]
 
 if __name__ == '__main__':
     port = 8080
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     connection_sock, addr = server_sock.accept() # 연결된 클라이언트의 소켓과 주소를 반환함
     print("Connect from " + str(addr))
 
-    rate = 0.1 # 데이터 받아오는 간격 설정
+    rate = 1 # 데이터 받아오는 간격 설정
     compare_timestamp = time.strftime("%Y-%m-%d %H:%M:%S") # 현재 시간을 저장
 
     try:

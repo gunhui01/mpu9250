@@ -37,7 +37,7 @@ def agm_weather_data_return(self, api_key, station_id):
     wind_speed = weather_data["wind_speed"]
     pressure = weather_data["pressure"]
 
-    return tmp, hum, wind_dir, wind_speed, pressure
+    return [tmp, hum, wind_dir, wind_speed, pressure]
 
 ### 기상 데이터를 문자열로 변환하여 반환하는 함수 ###
 def agm_weather_data_return_str(self, api_key, station_id):
