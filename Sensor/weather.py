@@ -27,7 +27,7 @@ def weather_return(api_key, station_id):
     return weather_dict
 
 ### 특정 기상 데이터 반환 ###
-def agm_weather_data_return(self, api_key, station_id):
+def agm_weather_data_return(api_key, station_id):
 
     weather_data = weather_return(api_key, station_id) #기상대 데이터 받아오기
     
@@ -40,5 +40,5 @@ def agm_weather_data_return(self, api_key, station_id):
     return [tmp, hum, wind_dir, wind_speed, pressure]
 
 ### 기상 데이터를 문자열로 변환하여 반환하는 함수 ###
-def agm_weather_data_return_str(self, api_key, station_id):
+def agm_weather_data_return_str(api_key, station_id):
     return ','.join(map(str, agm_weather_data_return(api_key, station_id)))
