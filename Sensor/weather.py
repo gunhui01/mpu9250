@@ -25,3 +25,16 @@ def weather_return(api_key, station_id):
     weather_dict["elevation"] = data["observations"][0]["metric_si"]['elev']
 
     return weather_dict
+
+### 특정 기상 데이터 반환 ###
+def agm_weather_data_return(self, api_key, station_id):
+
+    weather_data = weather_return(api_key, station_id) #기상대 데이터 받아오기
+    
+    tmp = weather_data["temperature"]
+    hum = weather_data["humidity"]
+    wind_dir = weather_data["wind_direction"]
+    wind_speed = weather_data["wind_speed"]
+    pressure = weather_data["pressure"]
+
+    return tmp, hum, wind_dir, wind_speed, pressure

@@ -6,7 +6,6 @@ import time
 import warnings
 
 from Sensor.rpy_calc import *
-from Sensor.weather import *
 
 ### MPU9250 레지스터 ###
 INT_PIN_CFG = 0x37
@@ -143,6 +142,7 @@ class Mpu:
         self.csv.write(str(self.read_ak_data(MAG_Z, ASA_Z)) + '\n')
         self.write_data(AK, CNTL_1, 0b10110)
     
+    ### 센서 데이터 반환 ###
     def agm_data_return(self):
         # ACCEL_X | ACCEL_Y | ACCEL_Z |  GYRO_X |  GYRO_Y |  GYRO_Z |  MAG_X  |  MAG_Y  |  MAG_Z  #
         #    0    |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    #
@@ -162,18 +162,6 @@ class Mpu:
         self.write_data(AK, CNTL_1, 0b10110)
 
         return a_x, a_y, a_z, g_x, g_y, g_z, m_x, m_y, m_z
-    
-    def agm_weather_data_return(self, api_key, station_id):
-        agm_weather_data = list(self.agm_data_return())
-
-        weather_data = weather_return(api_key, station_id)
-        agm_weather_data.append(weather_data["temperature"])
-        agm_weather_data.append(weather_data["humidity"])
-        agm_weather_data.append(weather_data["wind_direction"])
-        agm_weather_data.append(weather_data["wind_speed"])
-        agm_weather_data.append(weather_data["pressure"])
-
-        return agm_weather_data
     
     def calibrationed_agm_data_return(self):
         raw_data = self.agm_data_return()
