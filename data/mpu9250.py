@@ -4,8 +4,7 @@ import numpy as np
 import smbus
 import time
 import warnings
-
-from Sensor.rpy_calc import *
+from rpy_calc import *
 
 ### MPU9250 레지스터 ###
 INT_PIN_CFG = 0x37
