@@ -1,8 +1,9 @@
-import json, time
+from config.config_loader import api_key, station_id, server_port
+from time import sleep
 from datetime import *
 from socket import *
 from data.mpu9250 import Mpu
-from data.weather import agm_weather_data_return_str
+from data.weather import return_weather_data
 
 # 시간 초기화 함수
 def data_time():
@@ -24,24 +25,16 @@ def data_time():
 
     return now.replace(day=next_day, hour=next_hour, minute=next_minute, second=next_second, microsecond=0)
 
-
-### API 키, 기상대 ID, 지연시간 불러오기 ###
-with open("./config/config.json") as f:
-    config = json.load(f)
-api_key = config["api_key"]
-station_id = config["station_id"]
-
 if __name__ == '__main__':
-    port = 8080
     i2c1_lo = Mpu(1, "lo")
     i2c1_hi = Mpu(1, "hi")
     i2c2_lo = Mpu(2, "lo")
     sensors = [i2c1_lo, i2c1_hi, i2c2_lo]
 
     server_sock = socket(AF_INET, SOCK_STREAM) # 소켓 생성 (IPv4, TCP)
-    server_sock.bind(('', port)) # IP와 PORT 지정
+    server_sock.bind(('', server_port)) # IP와 PORT 지정
     server_sock.listen(1) # 클라이언트 연결 요청까지 기다림
-    print("Waiting for connection on %d port..." % port)
+    print("Waiting for connection on %d port..." % server_port)
 
     connection_sock, addr = server_sock.accept() # 연결된 클라이언트의 소켓과 주소를 반환함
     print("Connect from " + str(addr))
@@ -55,7 +48,7 @@ if __name__ == '__main__':
             else:
                 send_data += f"\n"
             connection_sock.send(send_data.encode()) # 생성한 데이터를 UTF-8으로 인코딩하여 전송
-            time.sleep(0.1)
+            sleep(0.1)
 
     next_data_time = data_time()
     try:
@@ -65,7 +58,7 @@ if __name__ == '__main__':
             now_str = now.strftime('%Y-%m-%d %H:%M:%S') # 현재 시간을 문자열로 변환
             if now >= next_data_time:
                 if now.second == 0:
-                    weather_data = agm_weather_data_return_str(api_key, station_id)
+                    weather_data = return_weather_data(api_key, station_id)
                     send_sensor_data(now_str, weather_data)
                     next_data_time = data_time()
                     print(now_str)

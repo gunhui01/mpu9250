@@ -1,5 +1,6 @@
-import os, sys, json
+import os, sys
 from socket import socket, error, AF_INET, SOCK_STREAM
+from config.config_loader import server_ip, server_port
 
 # output 파일 관리 클래스
 class FileManager:
@@ -31,42 +32,38 @@ class FileManager:
 
     # 모든 열린 파일 닫고 딕셔너리 비우기
     def close_all_files(self):
-        for sensor_id in self.files:
+        for sensor_id in list(self.files):
             self.close_file(sensor_id)
 fm = FileManager()
 
-### 서버 IP 받아오기 ###
-with open("./config/config.json") as f:
-    config = json.load(f)
-server_ip = config["server_ip"]
-server_port = config["server_port"]
+try:
+    client_sock = socket(AF_INET, SOCK_STREAM)
+    client_sock.connect((server_ip, server_port))
+    client_sock.settimeout(5)
+    print(f"Connected to {server_ip}.\n")
+except error as e:
+    print(f"Connection failed: {e}\n")
+    sys.exit(1)
 
-if __name__ == '__main__':
+buffer = ""
 
-    try:
-        client_sock = socket(AF_INET, SOCK_STREAM)
-        client_sock.connect((server_ip, server_port))
-        print(f"Connected to {server_ip}.\n")
-    except error as e:
-        print(f"Connection failed: {e}\n")
-        sys.exit(1)
+try:
+    while True:
+        recv_data = client_sock.recv(1024).decode()
+        if not recv_data:
+            print("Server disconnected")
+            break
+        ### 데이터가 연속적으로 전송되는 경우를 대비하여 버퍼에 데이터 추가 ###
+        buffer += recv_data
+        while '\n' in buffer:
+            recv_data, buffer = buffer.split('\n', 1) # 데이터를 개행문자를 기준으로 분리
+            sensor_id, data = recv_data.split(',', 1) # 데이터에서 센서ID 분리
+            fm.write_data(sensor_id, data)
 
-    buffer = ""
+except KeyboardInterrupt:
+    print("Client stopped")
 
-    try:
-        while True:
-            recv_data = client_sock.recv(1024).decode()
-
-            ### 데이터가 연속적으로 전송되는 경우를 대비하여 버퍼에 데이터 추가 ###
-            buffer += recv_data
-            while '\n' in buffer:
-                recv_data, buffer = buffer.split('\n', 1) # 데이터를 개행문자를 기준으로 분리
-                sensor_id, data = recv_data.split(',', 1) # 데이터에서 센서ID 분리
-                fm.write_data(sensor_id, data)
-
-    except KeyboardInterrupt:
-        print("Client stopped")
-
-    finally:
-        fm.close_all_files()
-        client_sock.close()
+finally:
+    fm.close_all_files()
+    client_sock.close()
+    print("Connection closed")

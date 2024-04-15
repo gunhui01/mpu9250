@@ -1,10 +1,6 @@
-import os
-import os.path
+import os, smbus, time
 import numpy as np
-import smbus
-import time
-import warnings
-from rpy_calc import *
+from data.rpy_calc import *
 
 ### MPU9250 레지스터 ###
 INT_PIN_CFG = 0x37
