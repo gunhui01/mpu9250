@@ -1,6 +1,6 @@
 {
-    "api_key": "",
-    "station_id": "",
-    "server_ip": "",
-    "server_port": ""
+    "API_KEY": "",
+    "STATION_ID": "",
+    "SERVER_IP": "",
+    "SERVER_PORT": ""
 }

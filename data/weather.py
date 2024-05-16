@@ -1,20 +1,29 @@
-import requests
+import aiohttp, asyncio
 
 ### 특정 기상 데이터 문자열 반환 ###
-def return_weather_data(api_key, station_id):
-    response = requests.get(f"https://api.weather.com/v2/pws/observations/current?stationId={station_id}&format=json&units=s&apiKey={api_key}")
-    data = response.json()
-
-    tmp = data["observations"][0]["metric_si"]['temp']
-    hum = data["observations"][0]["humidity"]
-    wind_dir = data["observations"][0]['winddir']
-    wind_speed = data["observations"][0]["metric_si"]['windSpeed']
-    pressure = data["observations"][0]["metric_si"]['pressure']
-    weather_data = [tmp, hum, wind_dir, wind_speed, pressure]
-    return ','.join(map(str, weather_data))
-
-
-
+async def return_weather_data(API_KEY, STATION_ID, now_str):
+    API_URL = f"https://api.weather.com/v2/pws/observations/current?stationId={STATION_ID}&format=json&units=s&apiKey={API_KEY}"
+    timeout = aiohttp.ClientTimeout(total=5)
+    try:
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(API_URL) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    tmp = data["observations"][0]["metric_si"]['temp']
+                    hum = data["observations"][0]["humidity"]
+                    wind_dir = data["observations"][0]['winddir']
+                    wind_speed = data["observations"][0]["metric_si"]['windSpeed']
+                    pressure = data["observations"][0]["metric_si"]['pressure']
+                    weather_data = [tmp, hum, wind_dir, wind_speed, pressure]
+                    return ','.join(map(str, weather_data))
+                else: raise Exception(now_str, "Non-successful state code(Weather API)")
+    except asyncio.TimeoutError:
+        print(now_str, "An error occurred: Request timeoout(Weather API)")
+        return 'Unable to get weather data'
+    except Exception as e:
+        print(now_str, "An error occurred: ", e)
+        return 'Unable to get weather data'
+        
 
 # 구버전 (딕셔너리 사용)
 '''
