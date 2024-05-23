@@ -1,5 +1,6 @@
-import os, sys
-from socket import socket, error, AF_INET, SOCK_STREAM
+import asyncio, os
+import socket
+from datetime import datetime
 from config.config_loader import SERVER_IP, SERVER_PORT
 
 # output 파일 관리 클래스
@@ -36,35 +37,54 @@ class FileManager:
             self.close_file(sensor_id)
 fm = FileManager()
 
-if __name__ == "__main__":
-    try:
-        client_sock = socket(AF_INET, SOCK_STREAM)
-        client_sock.connect((SERVER_IP, SERVER_PORT))
-        client_sock.settimeout(5)
-        print(f"Connected to {SERVER_IP}.\n")
-    except error as e:
-        print(f"Connection failed: {e}\n")
-        sys.exit(1)
 
-    buffer = ""
-
+async def main():
+    client_sock = None # 예외 처리용 소켓 초기화
     try:
         while True:
-            recv_data = client_sock.recv(1024).decode()
-            if not recv_data:
-                print("Server disconnected")
-                break
-            ### 데이터가 연속적으로 전송되는 경우를 대비하여 버퍼에 데이터 추가 ###
-            buffer += recv_data
-            while '\n' in buffer:
-                recv_data, buffer = buffer.split('\n', 1) # 데이터를 개행문자를 기준으로 분리
-                sensor_id, data = recv_data.split(',', 1) # 데이터에서 센서ID 분리
-                fm.write_data(sensor_id, data)
+            try:
+                client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_sock.connect((SERVER_IP, SERVER_PORT))
+                client_sock.settimeout(5)
+                print(f"Connected to {SERVER_IP}.")
+                print("Receiving data from the server...")
 
-    except KeyboardInterrupt:
-        print("Client stopped")
+                buffer = ""
+
+                try:
+                    while True:
+                        recv_data = client_sock.recv(1024).decode()
+                        if not recv_data:
+                            print("Server disconnected")
+                            break
+                        ### 데이터가 연속적으로 전송되는 경우를 대비하여 버퍼에 데이터 추가 ###
+                        buffer += recv_data
+                        while '\n' in buffer:
+                            recv_data, buffer = buffer.split('\n', 1) # 데이터를 개행문자를 기준으로 분리
+                            sensor_id, data = recv_data.split(',', 1) # 데이터에서 센서ID 분리
+                            fm.write_data(sensor_id, data)
+
+                finally:
+                    if client_sock:
+                        client_sock.close()
+
+            except socket.error as e:
+                    error_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    print(f"{error_time} Connection failed: {e}")
+
+            print(f"Try reconnecting in 5 seconds...")
+            await asyncio.sleep(5)
 
     finally:
         fm.close_all_files()
-        client_sock.close()
-        print("Connection closed")
+        if client_sock:
+            client_sock.close()
+        print("Socket connection closed")
+
+
+if __name__ == "__main__":
+    try:asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Client stopped by user input(Ctrl + C)")
+    except asyncio.CancelledError:
+        print("Client stopped by user input(Ctrl + C)")
