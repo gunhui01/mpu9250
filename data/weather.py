@@ -19,10 +19,10 @@ async def return_weather_data(API_KEY, STATION_ID, now_str):
                 else: raise Exception(now_str, "Non-successful state code(Weather API)")
     except asyncio.TimeoutError:
         print(now_str, "An error occurred: Request timeoout(Weather API)")
-        return 'Unable to get weather data'
+        return 'N/A'
     except Exception as e:
         print(now_str, "An error occurred: ", e)
-        return 'Unable to get weather data'
+        return 'N/A'
         
 
 # 구버전 (딕셔너리 사용)

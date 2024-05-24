@@ -1,13 +1,8 @@
 import asyncio, socket
 from config.config_loader import API_KEY, STATION_ID, SERVER_PORT
 from datetime import datetime
-from data.mpu9250 import Mpu
+from data.mpu9250 import Mpu, sensors, str_mpu_addr
 from data.weather import return_weather_data
-
-i2c1_lo = Mpu(1, "lo")
-i2c1_hi = Mpu(1, "hi")
-i2c2_lo = Mpu(2, "lo")
-sensors = [i2c1_lo, i2c1_hi, i2c2_lo]
 
 # 시간 초기화 함수
 def data_time():
@@ -31,8 +26,8 @@ def data_time():
 
 # 데이터 전송 함수
 async def send_data(now_str, weather_data, connection_sock):
-    for sensor_id in sensors: # sensors 내의 객체 각각 한 번씩 실행
-        send_data = f"{sensor_id},{now_str},{sensor_id.agm_data_return_str()}"
+    for sensor in sensors: # sensors 내의 객체 각각 한 번씩 실행
+        send_data = f"{sensor.sensor_id},{now_str},{sensor.agm_data_return_str()}"
         if weather_data == 'no_weather': send_data += f"\n"
         else: send_data += f",{weather_data}\n"
         

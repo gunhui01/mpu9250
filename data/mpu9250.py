@@ -1,6 +1,7 @@
 import os, smbus, time
 import numpy as np
 from data.rpy_calc import *
+from config.config_loader import MAX_I2C_BUS_COUNT
 
 ### MPU9250 레지스터 ###
 INT_PIN_CFG = 0x37
@@ -23,80 +24,63 @@ ASA_Y = 0x11
 ASA_Z = 0x12
 AK_WAI = 0x00
 
+def str_mpu_addr(mpu_addr):
+    if mpu_addr == 0x68:
+        return "lo"
+    elif mpu_addr == 0x69:
+        return "hi"
+    else:
+        return "error"
+    
+def is_mpu_connected(i2cbus, mpu_addr):
+    try:
+        i2c = smbus.SMBus(i2cbus)
+        if i2c.read_byte_data(mpu_addr, MPU_WAI) == 0x71:
+            return True
+        else: 
+            return False
+    except Exception as e:
+        return False
+    
 class Mpu:
-    def __init__(self, i2cbus, mpu_status):
+    def __init__(self, i2cbus, mpu_addr):
         self.i2c = smbus.SMBus(i2cbus)
         self.i2cbus = i2cbus
-        self.mpu_status = mpu_status
+        self.mpu_addr = mpu_addr
+        self.sensor_id = f"i2c{i2cbus}_{str_mpu_addr(mpu_addr)}"
 
-        if(mpu_status == "hi"): self.MPU = 0x69
-        elif(mpu_status == "lo"): self.MPU = 0x68
-        else:
-            print("MPU9250 상태 입력 오류!\nAD0 핀이 3.3V에 연결되어 있으면 hi, Ground에 연결되어 있으면 lo를 입력하세요.\n")
-            exit()
+        ### 센서 초기 설정 ###
+        print(f"==========<{self.sensor_id}>==========")
 
-        ### 센서 연결 확인, 초기 설정 ###
-        print("==========<" + str(self.i2cbus) + ", " + self.mpu_status.upper() + ">==========")
-        if(self.read_one_byte(self.MPU, MPU_WAI) == 0x71):
-            print("[MPU9250] 연결 확인.")
-        else:
-            print("[MPU9250] 연결 실패!")
-            exit()
-
-        self.write_data(self.MPU, INT_PIN_CFG, 0b10)
-        print("[MPU9250] Bypass 설정 성공.")
+        self.write_data(self.mpu_addr, INT_PIN_CFG, 0b10)
+        print("  [MPU9250] Bypass setting complete.")
 
         if(self.read_one_byte(AK, AK_WAI) == 0x48):
-            print("[AK8963] 연결 확인.")
+            print("  [AK8963] Connected.")
         else:
-            print("[AK8963] 연결 실패!")
-            exit()
-
-        ### csv 파일 생성 확인, 없을 시 생성 ###
-        self.dir_name = os.path.dirname(os.path.realpath(__file__))
-
-        if not os.path.isfile(self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv"):
-            os.system("touch " + self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv")
-            os.system("echo timestamp,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,mag_x,mag_y,mag_z >> " + self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv")
-        
-        self.csv = open(self.dir_name + "/i2c" + str(i2cbus) + '_' + mpu_status + ".csv", 'a')
+            print("  [AK8963] Connection Failed!")
 
         ### 센서 조정 ###
         self.calibration_data = self.calibration()
 
     ### str 출력 시 출력 형식 지정 ###
     def __str__(self): 
-        return f"i2c{self.i2cbus}_{self.mpu_status}"
+        return f"i2c{self.i2cbus}_{self.mpu_addr}"
 
     ### 종료시 센서 설정 ###
     def __del__(self):
-        
-        print("==========<" + str(self.i2cbus) + ", " + self.mpu_status.upper() + ">==========")
-        self.write_data(AK, CNTL_1, 0b0)
-        print("[AK8963] 센서 종료 설정 완료.")
-        self.write_data(self.MPU, INT_PIN_CFG, 0b0)
-        print("[MPU9250] 센서 종료 설정 완료.")
-
-        self.csv.close()
-        print("파일 닫기 완료.")
-
-    ### GYRO 센서 조정 ###
-    def calibration(self):
-        calibration_data = [0, 0, 0]
-
-        print("센서 조정을 시작합니다. 센서를 움직이지 않게 고정하세요.")
-        for i in range(10): calibration_data[0] += self.read_mpu_data(GYRO_X)
-        for i in range(10): calibration_data[1] += self.read_mpu_data(GYRO_Y)
-        for i in range(10): calibration_data[2] += self.read_mpu_data(GYRO_Z)
-
-        for i in range(3): calibration_data[i] /= 10
-        print("센서 조정 완료.")
-
-        return calibration_data
+        try:
+            # print(f"==========<{self.sensor_id}>==========")
+            if is_mpu_connected(self.i2cbus, self.mpu_addr):
+                self.write_data(self.mpu_addr, INT_PIN_CFG, 0b0)
+                self.write_data(AK, CNTL_1, 0b0)
+            # print("Sensor shut down.")
+        except OSError:
+            pass
 
     ### MPU9250에서 가속도, 자이로 값 받아옴 ###
     def read_mpu_data(self, reg):
-        data_list = self.i2c.read_i2c_block_data(self.MPU, reg, 2)
+        data_list = self.i2c.read_i2c_block_data(self.mpu_addr, reg, 2)
         raw = np.int16((data_list[0] << 8) | data_list[1])
         if(reg <= ACCEL_Z and reg >= ACCEL_X):
             ### ±2g : 16384 | ±4g : 8192 | ±8g : 4096 | ±16g : 2048 ###
@@ -123,21 +107,6 @@ class Mpu:
     def write_data(self, adr, reg, com):
         command = [int(com)]
         self.i2c.write_i2c_block_data(adr, reg, command)
-
-    ### csv 파일에 데이터 씀 ###
-    def agm_data_out(self):
-        self.csv.write(time.strftime("%Y.%m.%d %H:%M:%S") + ',')
-        self.csv.write(str(self.read_mpu_data(ACCEL_X)) + ',')
-        self.csv.write(str(self.read_mpu_data(ACCEL_Y)) + ',')
-        self.csv.write(str(self.read_mpu_data(ACCEL_Z)) + ',')
-        self.csv.write(str(self.read_mpu_data(GYRO_X)) + ',')
-        self.csv.write(str(self.read_mpu_data(GYRO_Y)) + ',')
-        self.csv.write(str(self.read_mpu_data(GYRO_Z)) + ',')
-        self.write_data(AK, CNTL_1, 0b1111)
-        self.csv.write(str(self.read_ak_data(MAG_X, ASA_X)) + ',')
-        self.csv.write(str(self.read_ak_data(MAG_Y, ASA_Y)) + ',')
-        self.csv.write(str(self.read_ak_data(MAG_Z, ASA_Z)) + '\n')
-        self.write_data(AK, CNTL_1, 0b10110)
     
     ### 센서 데이터 반환 ###
     def agm_data_return(self):
@@ -165,6 +134,20 @@ class Mpu:
     def agm_data_return_str(self):
         return ','.join(map(str, self.agm_data_return()))
     
+        ### GYRO 센서 조정 ###
+    def calibration(self):
+        calibration_data = [0, 0, 0]
+
+        #print("센서 조정을 시작합니다. 센서를 움직이지 않게 고정하세요.")
+        for i in range(10): calibration_data[0] += self.read_mpu_data(GYRO_X)
+        for i in range(10): calibration_data[1] += self.read_mpu_data(GYRO_Y)
+        for i in range(10): calibration_data[2] += self.read_mpu_data(GYRO_Z)
+
+        for i in range(3): calibration_data[i] /= 10
+        #print("센서 조정 완료.")
+
+        return calibration_data
+
     ### GYRO 센서 보정 후 데이터 반환 ###
     def calibrated_agm_data_return(self):
         calibrated_data = self.agm_data_return()
@@ -174,3 +157,20 @@ class Mpu:
     
         #calibrated_data[6] -= 24.3 # MAG_X offset
         #calibrated_data[7] -= 1.4 # MAG_Y offset
+
+### 연결된 센서 확인 ###
+active_sensors = []
+print("=====< Connected Sensor >=====")
+for i2cbus in range(1, MAX_I2C_BUS_COUNT+1):
+    bus_status = []
+    for mpu_addr in (0x68, 0x69):
+        if is_mpu_connected(i2cbus, mpu_addr):
+            active_sensors.append([i2cbus, mpu_addr])
+            bus_status.append(str_mpu_addr(mpu_addr))
+    if bus_status:
+        print(f"  BUS {i2cbus} : {', '.join(bus_status)}")
+
+sensors = []
+for i in active_sensors:
+    sensor = Mpu(i[0], i[1])
+    sensors.append(sensor)

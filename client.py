@@ -20,7 +20,7 @@ class FileManager:
             # 파일이 없으면 새로 생성하고, 파일이 비어있는 경우 헤더 추가
             if not os.path.exists(file_path):
                 with open(file_path, 'w') as file:
-                    file.write("timestamp,ACCEL_X,ACCEL_Y,ACCEL_Z,GYRO_X,GYRO_Y,GYRO_Z,MAG_X,MAG_Y,MAG_Z,temperature,humidity,wind_direction,wind_speed,pressure\n")
+                    file.write("timestamp,ACCEL_X,ACCEL_Y,ACCEL_Z,GYRO_X,GYRO_Y,GYRO_Z,MAG_X,MAG_Y,MAG_Z,roll,pitch,yaw,temperature,humidity,wind_direction,wind_speed,pressure\n")
             # 파일이 있으면 파일 열기
             self.files[sensor_id] = open(file_path, 'a')
         self.files[sensor_id].write(data + '\n')
