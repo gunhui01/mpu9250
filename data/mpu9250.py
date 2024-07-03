@@ -1,5 +1,4 @@
-import os, smbus, time
-import numpy as np
+import os, smbus2, time
 from data.rpy_calc import *
 from config.config_loader import MAX_I2C_BUS_COUNT
 
@@ -34,7 +33,7 @@ def str_mpu_addr(mpu_addr):
     
 def is_mpu_connected(i2cbus, mpu_addr):
     try:
-        i2c = smbus.SMBus(i2cbus)
+        i2c = smbus2.SMBus(i2cbus)
         if i2c.read_byte_data(mpu_addr, MPU_WAI) == 0x71:
             return True
         else: 
@@ -44,7 +43,7 @@ def is_mpu_connected(i2cbus, mpu_addr):
     
 class Mpu:
     def __init__(self, i2cbus, mpu_addr):
-        self.i2c = smbus.SMBus(i2cbus)
+        self.i2c = smbus2.SMBus(i2cbus)
         self.i2cbus = i2cbus
         self.mpu_addr = mpu_addr
         self.sensor_id = f"i2c{i2cbus}_{str_mpu_addr(mpu_addr)}"
@@ -81,7 +80,10 @@ class Mpu:
     ### MPU9250에서 가속도, 자이로 값 받아옴 ###
     def read_mpu_data(self, reg):
         data_list = self.i2c.read_i2c_block_data(self.mpu_addr, reg, 2)
-        raw = np.int16((data_list[0] << 8) | data_list[1])
+        raw = (data_list[0] << 8) | data_list[1]
+        # 2의 보수 변환(16비트 값 범위: -32768 ~ 32767)
+        if raw > 32767:
+            raw -= 65536
         if(reg <= ACCEL_Z and reg >= ACCEL_X):
             ### ±2g : 16384 | ±4g : 8192 | ±8g : 4096 | ±16g : 2048 ###
             data = raw / 17042
@@ -94,9 +96,13 @@ class Mpu:
     ### AK8963에서 지자기 값 받아옴 ###
     def read_ak_data(self, h_reg, asa_reg):
         data_list = self.i2c.read_i2c_block_data(AK, h_reg, 2)
-        h = np.int16((data_list[1] << 8) | data_list[0]) * 0.15
+        raw = (data_list[1] << 8) | data_list[0]
+        # 2의 보수 변환(16비트 값 범위: -32768 ~ 32767)
+        if raw > 32767:
+            raw -= 65536
+        raw = raw * 0.15
         asa = self.i2c.read_i2c_block_data(AK, asa_reg, 1)[0]
-        data = h * ((((asa - 128) * 0.5) / 128) + 1) # AK8963 데이터시트 8.3.11.
+        data = raw * ((((asa - 128) * 0.5) / 128) + 1) # AK8963 데이터시트 8.3.11.
         return data
 
     ### 1Byte 읽음 ###
@@ -144,7 +150,7 @@ class Mpu:
         for i in range(10): calibration_data[2] += self.read_mpu_data(GYRO_Z)
 
         for i in range(3): calibration_data[i] /= 10
-        #print("센서 조정 완료.")
+        print("센서 조정 완료.")
 
         return calibration_data
 
