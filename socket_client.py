@@ -1,7 +1,7 @@
 import asyncio, os
 import socket
 from datetime import datetime
-from config.config_loader import SERVER_IP, SERVER_PORT
+from config.config_loader import SOCKET_SERVER_IP, SOCKET_SERVER_PORT
 
 # output 파일 관리 클래스
 class FileManager:
@@ -44,9 +44,9 @@ async def main():
         while True:
             try:
                 client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client_sock.connect((SERVER_IP, SERVER_PORT))
+                client_sock.connect((SOCKET_SERVER_IP, SOCKET_SERVER_PORT))
                 client_sock.settimeout(5)
-                print(f"Connected to {SERVER_IP}.")
+                print(f"Connected to {SOCKET_SERVER_IP}.")
                 print("Receiving data from the server...")
 
                 buffer = ""

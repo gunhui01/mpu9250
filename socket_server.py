@@ -1,5 +1,5 @@
 import asyncio, socket
-from config.config_loader import API_KEY, STATION_ID, SERVER_PORT
+from config.config_loader import API_KEY, STATION_ID, SOCKET_SERVER_PORT
 from datetime import datetime
 from data.mpu9250 import Mpu, sensors, str_mpu_addr
 from data.weather import return_weather_data
@@ -42,9 +42,9 @@ async def main():
         while True:
             server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # 소켓 생성 (IPv4, TCP)
             server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # 소켓 옵션 설정
-            server_sock.bind(('', SERVER_PORT)) # IP와 PORT 지정
+            server_sock.bind(('', SOCKET_SERVER_PORT)) # IP와 PORT 지정
             server_sock.listen(1) # 클라이언트 연결 요청까지 기다림
-            print("Waiting for connection on %d port..." % SERVER_PORT)
+            print("Waiting for connection on %d port..." % SOCKET_SERVER_PORT)
 
             client_sock, client_addr = server_sock.accept() # 연결된 클라이언트의 소켓과 주소를 반환함
             print("Connected from " + str(client_addr))

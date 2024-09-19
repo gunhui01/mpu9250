@@ -1,8 +1,8 @@
 import time
 import paho.mqtt.client as mqtt
 from data.mpu9250 import Mpu, sensors, str_mpu_addr
+from config.config_loader import MQTT_BROKER_IP
 
-BROKER_IP = "192.168.0.100"
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code %d", rc)
@@ -31,7 +31,7 @@ mqttc = mqtt.Client()
 mqttc.on_connect = on_connect
 mqttc.on_publish = on_publish
     
-mqttc.connect(BROKER_IP, 1883, 60)
+mqttc.connect(MQTT_BROKER_IP, 1883, 60)
 mqttc.loop_start()
 
 try:
